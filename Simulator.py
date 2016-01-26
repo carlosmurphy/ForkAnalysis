@@ -1,5 +1,5 @@
 """
-Simulation assumptions:
+---Simulation assumptions----
 No tire deformation
 Fixed Diameter wheel (OutsideDimater)
 Constant forward velocity - if someone decides to relate Vx to the rebound time it should be able to be subbed in for Vx
@@ -30,15 +30,18 @@ def inchesToM(inches): #convert inches to meters
     return meters
 
 def main():
-    Vs = 0 #ShaftVelocity in m/s
     Aht = math.radians(70) #head tube angle in degrees converted to radians
     Dw = 29+2.2 #radius of wheel in inches
-    Hb = 3 #Height of bump in inches
-    Vx = 5 #forward velocity in m/s
-    ThetaDot = 0 #degrees per second the wheel center travels to get over the bump
-    As = 0 #Acceleration of the shaft
+    Hb = 3 #Height of bump in inches can't imagine hitting something larger than this at speed
+    #10 seems like a good average for XC over a 20 ish mile ride
+    #DH guys hit nearly 50?!
+    #My fast XC speeds seem to be around 25 downhill
+    Vx = 25 #forward velocity in mph
 
-    Hb = inchesToM(Hb)
+
+    #doing dem converstions to metric and radius
+    Vx/=2.23694 # convert mph to m/s
+    Hb = inchesToM(Hb) #convert height of bump to meters
     Dw = inchesToM(Dw) #convert to meters
     Rw=Dw/2 #radius from diameter
 
@@ -50,7 +53,7 @@ def main():
     x_data=[]
 
     X=disturbanceX
-    xOld=X+.001
+    xOld=X
     VsOld=0
     while X > 0:
         #where in the arc of rolling over the disturbance as a function of X distance
@@ -74,7 +77,11 @@ def main():
         dV=VsOld-Vs
 
         #acceleration between this point and last
-        As=dV/dT
+        if dT>0:
+            As=dV/dT #finding shaft acceleration by comparing the change in velocity to change in time
+            As/=9.80665 #convert to G's (earth standard of course!)
+        else:
+            As=0
 
         #saing acceleration data
         AsData.append(As)
@@ -84,13 +91,18 @@ def main():
         xOld=X
         X-=.001
 
-    plt.figure(1)
-    plt.subplot(211)
+    #plot all the things, V and A as seperate graphs
+    fig = plt.figure(1)
+    ax1=plt.subplot(211) #need to save subplot so we can add labels
     plt.plot(x_data,AsData[::-1])
-    plt.axis([0, disturbanceX+.001, 0, 140])
+    ax1.set_xlabel('Forward Travel (m)') #labels
+    ax1.set_ylabel('Acceleration (G)')
 
-    plt.subplot(212)
+    ax2=plt.subplot(212) #need to save subplot so we can add labels
     plt.plot(x_data,VsData[::-1])
+    ax2.set_xlabel('Forward Travel (m)')#labels
+    ax2.set_ylabel('Shaft Speed (m/s)')
+
     plt.show()
 
     #As = (math.tan(ThetaDot)Vx)/math.sin(Aht)
